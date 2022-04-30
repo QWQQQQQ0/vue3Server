@@ -18,6 +18,6 @@ router.post('/sendcode', userHandler.receiveCode)
 
 router.post('/test', userHandler.receiveImg)
 
-router.post('/testhtml', userHandler.receiveHtml)
+// router.post('/testhtml', userHandler.receiveHtml)
 
 module.exports = router

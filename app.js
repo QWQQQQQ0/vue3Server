@@ -26,9 +26,7 @@ app.use('/api', outAccess)
 const innerAccess = require('./needPermit/router')
 app.use('/home', innerAccess)
 app.use((err, req, res, next) =>{
-    
     if (err.name === 'UnauthorizedError') {
-
         res.statuCode = 403
         return res.cc(res.statuCode)
     }

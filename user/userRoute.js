@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const fs = require("fs")
 const multiparty = require('multiparty')
-const handleFile = require('../util/fsHandle')
+
 const config = require('../util/config')
 
 let email = {}
@@ -132,6 +132,7 @@ exports.receiveCode = (req, res) => {
             })
         })
     }else {
+        
         userInfo.password = bcrypt.hashSync(userInfo.password, 10)
         const sql = 'insert into user_info set ?'
         db.query(sql, {username: userInfo.username, password: userInfo.password, email:userInfo.email}, (err, result) => {
@@ -183,18 +184,18 @@ exports.receiveImg = (req, res) => {
         // })
     })
 }
-exports.receiveHtml = (req, res) => {
-    const form = new multiparty.Form()
-    form.parse(req, (err, fileds, file) => {
-        for (let i in file) {
-            let data = handleFile.handleRead(file[i][0].path)
+// exports.receiveHtml = (req, res) => {
+//     const form = new multiparty.Form()
+//     form.parse(req, (err, fileds, file) => {
+//         for (let i in file) {
+//             let data = handleFile.handleRead(file[i][0].path)
 
-            data.then(resD => {
-                handleFile.handleWrite(`./store/article/${4}_${file[i][0].fieldName}.html`,resD, res)
-                fs.unlink(file[i][0].path, err => {
-                    if (err) res.cc(err)
-                })
-            })
-        }
-    })
-}
+//             data.then(resD => {
+//                 handleFile.handleWrite(`./store/article/${4}_${file[i][0].fieldName}.html`,resD, res)
+//                 fs.unlink(file[i][0].path, err => {
+//                     if (err) res.cc(err)
+//                 })
+//             })
+//         }
+//     })
+// }

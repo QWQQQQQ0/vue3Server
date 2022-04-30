@@ -8,4 +8,6 @@ router.get('/getinfo', userHandler.getInfo)
 
 router.post('/changepic', userHandler.handlePic)
 
+router.post('/sendhtml', userHandler.receiveHtml)
+
 module.exports = router

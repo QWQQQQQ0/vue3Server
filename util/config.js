@@ -1,3 +1,4 @@
+let ip = require('os')
 module.exports = {
     emailSendConfig : {
         host:'smtp.qq.com',
@@ -10,5 +11,6 @@ module.exports = {
         from: '2778925023@qq.com',
         to: '',
         text: ``
-    }
+    },
+    ipAddress:ip.networkInterfaces()['WLAN'][1]['address']
 }
