@@ -3,10 +3,10 @@ const nodemailer = require('nodemailer')
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const fs = require("fs")
+const dbHandle = require('../util/handleDb')
 const multiparty = require('multiparty')
 
 const config = require('../util/config')
-
 let email = {}
 
 exports.regUser = (req, res) => {
@@ -36,7 +36,6 @@ exports.regUser = (req, res) => {
             setTimeout(() => {
                 delete email[userInfo.username]
             },120000)
-            
         }else {
             email[userInfo.email] = identifyCode
             setTimeout(() => {
@@ -61,8 +60,8 @@ exports.login = (req, res) => {
             if (err) return res.cc(err)
             if (result.length !== 1) return res.cc('用户名不存在，请注册或重新登录')
             const compareResult = bcrypt.compareSync(userInfo.password, result[0].password)
-            if (!compareResult) return res.cc('密码错误，请重新输入或修改密码')
-            const user = {...result[0], password: '',address: ''}
+            if (!compareResult && userInfo.password!==result[0].password) return res.cc('密码错误，请重新输入或修改密码')
+            const user = {...result[0], password: '',address: '', birthday: ''}
 
             const tokenStr = jwt.sign(user, 'vueServer', {expiresIn: '10h'})
             result[0].password = ''
@@ -98,8 +97,6 @@ exports.login = (req, res) => {
 }
 
 exports.loadFiles = (req, res) => {
-    // console.log(req)
-    
     const form = new multiparty.Form()
     form.parse(req, (err, fileds, file) => {
         
@@ -132,7 +129,6 @@ exports.receiveCode = (req, res) => {
             })
         })
     }else {
-        
         userInfo.password = bcrypt.hashSync(userInfo.password, 10)
         const sql = 'insert into user_info set ?'
         db.query(sql, {username: userInfo.username, password: userInfo.password, email:userInfo.email}, (err, result) => {
@@ -145,44 +141,8 @@ exports.receiveCode = (req, res) => {
     }
     
 }
-
-exports.receiveImg = (req, res) => {
-    
-    const form = new multiparty.Form()
-    form.parse(req, (err, fileds, file) => {
-        console.log(Object.keys(file))
-        res.send({
-            "errno": 1, // 只要不等于 0 就行
-            "message": "失败信息"
-        })
-        // handle()
-        async function handle() {
-            for (let i in file) {
-                let result = await new Promise((resolve, reject) => {
-                    fs.readFile(file[i][0].path,(err, data) => {
-                        const decodeImg = Buffer.from(data)
-                        resolve(data)
-                    })
-                })
-                fs.writeFile(`./store/${file[i][0].fieldName}.jpeg`, result, (err, data) => {
-                    let body = {
-                        "errno": 0, // 注意：值是数字，不能是字符串
-                        "data": {
-                            "url": `http://192.168.82.35:3688/api/${file[i][0].fieldName}.jpeg`, // 图片 src ，必须
-                            "alt": "yyy", // 图片描述文字，非必须
-                            "href": "zzz" // 图片的链接，非必须
-                        }
-                    }
-                    res.send(body)
-                })
-            }
-            
-            
-        }
-        // fs.writeFile(`./store/${req.user.id}.jpg`, decodeImg,(err) => {
-        //     if (err) res.cc(err)
-        // })
-    })
+exports.sendArticle = (req, res) => {
+    dbHandle.selectInfo(`select artId, cut_content from articals order by artId desc LiMIT ${req.query.count * 5},5`,{code:0},res)
 }
 // exports.receiveHtml = (req, res) => {
 //     const form = new multiparty.Form()
