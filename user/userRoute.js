@@ -61,7 +61,7 @@ exports.login = (req, res) => {
             if (result.length !== 1) return res.cc('用户名不存在，请注册或重新登录')
             const compareResult = bcrypt.compareSync(userInfo.password, result[0].password)
             if (!compareResult && userInfo.password!==result[0].password) return res.cc('密码错误，请重新输入或修改密码')
-            const user = {...result[0], password: '',address: '', birthday: ''}
+            const user = {...result[0], password: '',address: '', birthday: '', state: '',power:'',email: ''}
 
             const tokenStr = jwt.sign(user, 'vueServer', {expiresIn: '10h'})
             result[0].password = ''

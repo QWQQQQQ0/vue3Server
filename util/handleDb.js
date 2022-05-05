@@ -1,9 +1,8 @@
 const db = require('../db/userdata')
 
 exports.changeInfo = (base,idKey,req,res) => {
-
     db.query(`update ${base} set ? where ${idKey}=?`, [req.body, req.user[idKey]], (err, result) => {
-        console.log(req.body)
+
         if (err) return res.cc(err)
         // if (err) return console.log(err)
         if (result.affectedRows !== 1) return res.cc('更新用户信息失败')

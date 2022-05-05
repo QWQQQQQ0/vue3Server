@@ -18,4 +18,9 @@ router.get('/getselfartical', userHandler.sendUserArtical)
 router.post('/modifyinfo', userHandler.modifyInfo)
 
 router.post('/modifypwd_email', userHandler.sendIdentifyCode)
+
+router.post('/deleteArticle', userHandler.deleteArticle)
+
+router.post('/deleteCount', userHandler.deleteCount)
+
 module.exports = router
