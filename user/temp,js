@@ -3,6 +3,24 @@ const db = require('../db/userdata')
 //     console.log(result[0].file_address.toString())
 
 // })
-db.query("INSERT INTO articals (`uid`, `full_content`) VALUES ('6', b'下密码')", (err, result) => {
-    console.log(result,err)
+// const li = [34,36,37,44,66]
+// str = '(' + li.toString() + ')'
+// const data = {}
+// db.query(`select * from comments where artid = 61`, (err, result) => {
+//     if (err) return res.cc(err)
+//     data['m'] = result
+//     const uidLi = Array.from(new Set(result.map((item) => {
+//         return item.uid
+//     })))
+//     hPicStr = `(${uidLi.toString()})`
+//     db.query(`select uid,user_pic from user_info where uid in ${hPicStr}`, (err, result) => {
+//         for (let i of result) {
+//             data[i.uid] = i.user_pic
+//         }
+//     })
+// })
+db.query(`update user_info set likes_object=concat(61=7,likes_object) where uid=7`,(err, result) => {
+    if (err)console.log(err)
+    console.log(result)
+
 })

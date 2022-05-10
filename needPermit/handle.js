@@ -104,8 +104,14 @@ exports.receiveHtml = (req, res) => {
     })
 }
 exports.sendFullContent = (req, res) => {
-    console.log(req.body.artid)
-    dbHandle.selectInfo(`select uid, full_content from articals where artId=${req.body.artid}`, {code : 0}, res)
+
+    dbHandle.selectInfo(`select uid, full_content, likes from articals where artId=${req.body.artid}`, {code : 0}, res, (message) => {
+        db.query(`select likes_object from user_info where uid = ${req.user.uid}`, (err, result) => {
+            if (err) return res.cc(err)
+            message['likes_object'] = result[0]['likes_object']
+            res.send(message)
+        })
+    })
 
 }
 exports.sendUserArtical = (req, res) => {
@@ -195,10 +201,56 @@ exports.deleteArticle = (req, res) => {
     db.query(`DELETE FROM articals WHERE (artId = ${req.query.artId})`, (err, result) => {
         if (err) return res.cc(err)
         if (result.affectedRows != 1) return res.cc('删除未成功')
+        db.query(`DELETE FROM comments WHERE (artId = ${req.query.artId})`, (err, result) => {
+        if (err) return res.cc(err)
         res.send({message: '删除成功', code: 0})
+        })
     })
 }
 
 exports.deleteCount = (req, res) => {
     res.send()
+}
+
+exports.comment = (req, res) => {
+    req.body = {...req.body, uid: req.user.uid}
+    const message = {code:0,m:{...req.body}}
+    message[req.user.uid] = [req.user.user_pic, req.user.username]
+    req.body.comment = Buffer.from(req.body.comment)
+    dbHandle.insertInfo('comments', req.body, {code:0, message}, res)
+}
+
+exports.sendComments = (req, res) => {
+    const data = {}
+    db.query(`select * from comments where artid = ${req.query.artid}`, (err, result) => {
+        if (err) return res.cc(err)
+        result.forEach(element => {
+            element.comment = element.comment.toString()
+        });
+        data['m'] = result
+        db.query(`select uid,user_pic,username from user_info where uid in (select uid from comments where artid=${req.query.artid})`, (err, result) => {
+            if (err) return res.cc(err)
+            for (let i of result) {
+                data[i.uid] = [i.user_pic, i.username]
+            }
+            res.send(data)
+        })
+    })
+}
+
+exports.changelike = (req, res) => {
+    const addData = `&${req.query.artid}=${req.user.uid}`
+    if (!req.query.delete) {
+        db.query(`update user_info set likes_object=concat('${addData}',likes_object) where uid=${req.user.uid}`,(err, result) => {
+            if (err) res.cc(err)
+            req.user['artId'] = req.query.artid
+            dbHandle.changeInfo('articals','artId', req, res)
+        })
+    }else {
+        db.query(`update user_info set likes_object=replace(likes_object,'${addData}','') where uid=${req.user.uid}`, (err, result) => {
+            if (err) return res.cc(err)
+            req.user['artId'] = req.query.artid
+            dbHandle.changeInfo('articals', 'artId', req, res)
+        })
+    }
 }

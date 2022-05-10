@@ -144,6 +144,9 @@ exports.receiveCode = (req, res) => {
 exports.sendArticle = (req, res) => {
     dbHandle.selectInfo(`select artId, cut_content from articals order by artId desc LiMIT ${req.query.count * 5},5`,{code:0},res)
 }
+exports.refresh = (req, res) => {
+    dbHandle.selectInfo('select artId, cut_content from articals order by artId desc LiMIT 0,5',{code: 0}, res)
+}
 // exports.receiveHtml = (req, res) => {
 //     const form = new multiparty.Form()
 //     form.parse(req, (err, fileds, file) => {

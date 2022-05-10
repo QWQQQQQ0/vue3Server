@@ -23,4 +23,10 @@ router.post('/deleteArticle', userHandler.deleteArticle)
 
 router.post('/deleteCount', userHandler.deleteCount)
 
+router.post('/sendComment', userHandler.comment)
+
+router.get('/getComments', userHandler.sendComments)
+
+router.post('/changeLike', userHandler.changelike)
+
 module.exports = router

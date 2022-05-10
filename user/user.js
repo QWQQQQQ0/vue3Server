@@ -17,6 +17,8 @@ router.post('/mainPage', userHandler.loadFiles)
 router.post('/sendcode', userHandler.receiveCode)
 
 router.get('/article', userHandler.sendArticle)
+
+router.get('/refresh', userHandler.refresh)
 // router.post('/test', userHandler.receiveImg)
 
 // router.post('/testhtml', userHandler.receiveHtml)
