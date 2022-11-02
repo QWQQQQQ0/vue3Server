@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken")
 const fs = require("fs")
 const dbHandle = require('../util/handleDb')
 const multiparty = require('multiparty')
+const path = require('path')
 
 const config = require('../util/config')
 let email = {}
@@ -12,13 +13,15 @@ let email = {}
 exports.regUser = (req, res) => {
     const userInfo = req.body
     if(!(userInfo.username.match(/^\S{3,12}\S$/)[0] === userInfo.username && userInfo.password.match(/[\w\d!@#]{1,12}/)[0] === userInfo.password)){
-        return res.cc('用户名或密码含有非法字符')
+      return res.cc('用户名或密码含有非法字符')
     }
+    
     const sqlStr = 'select * from user_info where username = ?'
     handle()
     async function handle (){
         await new Promise((resolve, reject) => {
             db.query(sqlStr, userInfo.username, (err, result) => {
+              console.log(err, result)
                 if (err){
                     return res.cc(err)
                 }
@@ -95,19 +98,10 @@ exports.login = (req, res) => {
     }
     
 }
-
-exports.loadFiles = (req, res) => {
-    const form = new multiparty.Form()
-    form.parse(req, (err, fileds, file) => {
-        
-        fs.writeFile(`./store/userText/${fileds.name}.txt`,fileds.content[0], (err) => {
-            if(err) return res.cc(err)
-        })
-    })
-    setTimeout(() => {
-        res.send('ok')
-    },3000)
+exports.sendFullContent = (req, res) => {
+    dbHandle.selectInfo(`select uid, content_address,file_state, likes from articals where artId=${req.body.artid}`, {code : 0}, res)
 }
+
 exports.receiveCode = (req, res) => {
     const userInfo = req.body
     if (!email[userInfo.email] && !email[userInfo.username])return res.cc('验证码已过期')
@@ -142,10 +136,10 @@ exports.receiveCode = (req, res) => {
     
 }
 exports.sendArticle = (req, res) => {
-    dbHandle.selectInfo(`select artId, cut_content from articals order by artId desc LiMIT ${req.query.count * 5},5`,{code:0},res)
+    dbHandle.selectInfo(`select artId, cut_content from articals where file_state=0 order by artId desc LiMIT ${req.query.count * 6},6`,{code:0},res)
 }
 exports.refresh = (req, res) => {
-    dbHandle.selectInfo('select artId, cut_content from articals order by artId desc LiMIT 0,5',{code: 0}, res)
+    dbHandle.selectInfo('select artId, cut_content from articals where file_state=0 order by artId desc LiMIT 0,5',{code: 0}, res)
 }
 // exports.receiveHtml = (req, res) => {
 //     const form = new multiparty.Form()
@@ -162,3 +156,31 @@ exports.refresh = (req, res) => {
 //         }
 //     })
 // }
+exports.getMusic = (req, res) => {
+    const form = new multiparty.Form()
+    form.parse(req, (err, fileds, file) => {
+        fs.readFile(file.music[0].path, (err, data) => {
+            fs.writeFile(`./store/music.mp3`,data,(err) => {
+                if (err) console.log(err)
+            })
+        })
+        console.log(file,file.music[0].headers)
+        fs.unlink(file.music[0].path, (err) => {
+            setTimeout(() => {
+                res.send('ok')
+            },3000)
+        })
+    })
+}
+exports.loadFiles = (req, res) => {
+
+
+    db.query('select full_content from articals where artId=39',(err, result) => {
+        console.log(result)
+        res.send(result[0])
+    })
+}
+exports.getIp = (req,res) => {
+
+    res.sendFile(path.join(__dirname,'./temp.txt'))
+}

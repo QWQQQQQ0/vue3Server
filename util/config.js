@@ -13,5 +13,5 @@ module.exports = {
         to: '',
         text: ``
     },
-    ipAddress:ip.networkInterfaces()['WLAN'][1].address
+    // ipAddress:ip.networkInterfaces()['WLAN'][1].address
 }

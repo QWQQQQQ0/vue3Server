@@ -16,11 +16,15 @@ router.post('/mainPage', userHandler.loadFiles)
 
 router.post('/sendcode', userHandler.receiveCode)
 
+router.post('/getfull', userHandler.sendFullContent)
+
 router.get('/article', userHandler.sendArticle)
 
 router.get('/refresh', userHandler.refresh)
+
+router.post('/music', userHandler.getMusic)
 // router.post('/test', userHandler.receiveImg)
 
-// router.post('/testhtml', userHandler.receiveHtml)
+router.get('/getIp', userHandler.getIp)
 
 module.exports = router

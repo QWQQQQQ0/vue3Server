@@ -1,12 +1,13 @@
 const express = require('express')
 const cors = require('cors')
 const expressJwt = require("express-jwt")
-
+const expressip = require('express-ip-middleware');
 
 const app = express()
 app.use(cors())
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
+app.use(expressip());
 app.use((req, res, next) => {
     res.cc = function (err, code = 1) {
         res.send({
@@ -27,7 +28,9 @@ const innerAccess = require('./needPermit/router')
 app.use('/home', innerAccess)
 app.use((err, req, res, next) =>{
     if (err.name === 'UnauthorizedError') {
+        // console.log(req)
         res.statuCode = 403
+        console.warn(err, 'errrr')
         return res.cc(res.statuCode)
     }
 } )

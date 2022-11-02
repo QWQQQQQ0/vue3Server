@@ -2,6 +2,7 @@ const db = require('../db/userdata')
 const bcrypt = require("bcryptjs")
 const multiparty = require("multiparty")
 const fs = require("fs")
+const path = require('path')
 const dbHandle = require('../util/handleDb')
 const handleFile = require('../util/fsHandle')
 const config = require('../util/config')
@@ -9,6 +10,7 @@ const nodemailer = require('nodemailer')
 const identifyCode = {}
 
 exports.getInfo = (req, res) => {
+    console.log(req.query)
     const data = req.user
         if (req.query.need) {
             db.query(`select user_pic from user_info where uid=${req.user.uid} && state=0`, (err, result) => {
@@ -24,13 +26,10 @@ exports.getInfo = (req, res) => {
             res.send(data)
         }
 }
-
-
 exports.handlePic = (req, res) => {
     const form =new multiparty.Form()
     let path
     form.parse(req, (err, fileds, file) => {
-        
         handle(file)
         async function handle(file) {
             for (let i in file) {
@@ -45,19 +44,19 @@ exports.handlePic = (req, res) => {
                 }else{
                     path = `./store/ordinary/${req.user.uid}_${req.query.count}${file[i][0].fieldName}.jpeg`
                 }
-                console.log(path)
                 await fs.writeFile(path, result, (err, data) => {
                     if (err)res.cc(err)
                     let body = {
                         "errno": 0, // 注意：值是数字，不能是字符串
                         "data": {
-                            "url": `http://127.0.0.1:3688/api${path.replace('./store', '')}`, // 图片 src ，必须
+                            "url": `http://124.220.165.32:3688/api${path.replace('./store', '')}`, // 图片 src ，必须
                             "alt": "yyy", // 图片描述文字，非必须
                             "href": "zzz" // 图片的链接，非必须
                         }
                     }
                     fs.unlink(file[i][0].path, (err) => {
                         if (err) return res.send(body)
+
                         // console.log(req.user.user_pic && !(/headPic/.test(Object.keys(file)[0])))
                     })
                     if (!(Object.keys(file)[0] === 'headPic')) return res.send(body)
@@ -73,7 +72,7 @@ exports.handlePic = (req, res) => {
 exports.receiveHtml = (req, res) => {
     const form = new multiparty.Form()
     let count = 0
-    let body = {}
+    let body = {file_state: req.query.file_state}
     body['uid'] = req.user.uid
     form.parse(req, (err, fileds, file) => {
         for (let i in file) {
@@ -82,21 +81,30 @@ exports.receiveHtml = (req, res) => {
                 if (i === 'cut_content'){
                     body[i] = resD.toString()
                 }else{
-                    body[i] = resD
+                    let address = `./store/article/${req.user.uid}_${new Date().getTime()}.txt`
+                    if(req.query.artid) {
+                        db.query(`select content_address from articals where artId=${req.query.artid}`, (err, result) => {
+                            address = result[0].content_address
+                            handleFile.handleWrite(`./store${address}`,resD)
+                        })
+                    }else {
+                        handleFile.handleWrite(address,resD)
+                        body[i] = address.replace('./store', '')
+                    }
                 }
                 fs.unlink(file[i][0].path, err => {
-                    if (err) res.cc(err)
+                    if (err) return res.cc(err)
                     count ++
                     if (count === 2){
                         if (req.query.artid) {
-                            req.body = body
-                            req.user['artId'] =parseInt(req.query.artid)
-                            req['message'] = {message:'修改成功', code:0}
-                            dbHandle.changeInfo('articals', 'artId', req, res)
+                            res.send({code:0, message: '修改成功'})
+                            // req.body = body
+                            // req.user['artId'] =parseInt(req.query.artid)
+                            // req['message'] = {message:'修改成功', code:0}
+                            // dbHandle.changeInfo('articals', 'artId', req, res)
                         }else {
                             dbHandle.insertInfo('articals', body, {message:'上传成功',code:0}, res)
                         }
-
                     }
                 })
             })
@@ -104,15 +112,14 @@ exports.receiveHtml = (req, res) => {
     })
 }
 exports.sendFullContent = (req, res) => {
-
-    dbHandle.selectInfo(`select uid, full_content, likes from articals where artId=${req.body.artid}`, {code : 0}, res, (message) => {
+    dbHandle.selectInfo(`select uid, content_address, file_state, likes from articals where artId=${req.body.artid}`, {code : 0}, res, (message) => {
         db.query(`select likes_object from user_info where uid = ${req.user.uid}`, (err, result) => {
             if (err) return res.cc(err)
             message['likes_object'] = result[0]['likes_object']
+            message['uid'] = req.user.uid
             res.send(message)
         })
     })
-
 }
 exports.sendUserArtical = (req, res) => {
     dbHandle.selectInfo(`select artId, cut_content from articals where uid=${req.user.uid} order by artId desc`, {code:0}, res)
@@ -182,6 +189,7 @@ exports.modifyInfo = (req, res) => {
 }
 
 exports.sendIdentifyCode = (req, res) => {
+  console.log(req.user,'kkk')
     const transporter = nodemailer.createTransport(config.emailSendConfig)
     const Code =parseInt(Math.random()*1000000)
     identifyCode[req.user.uid] = Code
@@ -193,6 +201,7 @@ exports.sendIdentifyCode = (req, res) => {
     data.text = `您的验证码为${Code},2分钟后过期`
     transporter.sendMail(data, (err, info) => {
         if (err) return res.cc('邮箱名非法或不存在，请重新输入' + err)
+        console.log(req.user)
         res.send('验证码以发送至您的邮箱')
     })
 }

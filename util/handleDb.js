@@ -33,6 +33,5 @@ exports.selectInfo = (selectStr, message, res, fn) => {
         }else {
             res.send(message)
         }
-
     })
 }
